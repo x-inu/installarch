@@ -1,1 +1,1 @@
-# Install-Arch-Linux
+# Install-Arch-Linux (Without SDDM)
