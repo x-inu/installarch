@@ -8,7 +8,7 @@ echo "=============================================="
 echo "   SCRIPT INSTALL ARCH + KDE PLASMA AUTOMATIS  "
 echo "=============================================="
 echo
-
+ 
 # Pastikan sudah di arch-chroot
 if [ "$(ls / | grep mnt)" ]; then
     echo "Apakah Anda sudah berada di arch-chroot? (y/n)"
