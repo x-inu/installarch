@@ -22,6 +22,23 @@ if [ "$(ls / | grep mnt)" ]; then
 fi
 
 # ============================
+# BUAT PASSWORD ROOT
+# ============================
+echo
+echo "=============================================="
+echo "   SETUP PASSWORD ROOT"
+echo "=============================================="
+echo
+read -p "Apakah Anda ingin mengatur password root sekarang? (y/n): " setroot </dev/tty
+if [ "$setroot" == "y" ]; then
+    echo "Masukkan password untuk root:"
+    passwd root
+    echo "Password root berhasil diatur."
+else
+    echo "Password root dilewati (disarankan untuk diset manual nanti)."
+fi
+
+# ============================
 # TANYA: Apakah ada OS lain?
 # ============================
 echo
@@ -56,6 +73,29 @@ lib32-vulkan-radeon vulkan-icd-loader lib32-vulkan-icd-loader libva-mesa-driver 
 lib32-libva-mesa-driver pipewire pipewire-audio pipewire-pulse wireplumber linux-firmware
 
 # ============================
+# AUTO LOGIN OPSIONAL
+# ============================
+echo
+read -p "Apakah ingin mengaktifkan auto login di tty1? (y/n): " autologin </dev/tty
+if [ "$autologin" == "y" ]; then
+    read -p "Masukkan nama user untuk auto login: " username </dev/tty
+    sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
+    cat <<EOF | sudo tee /etc/systemd/system/getty@tty1.service.d/override.conf >/dev/null
+[Service]
+ExecStart=
+ExecStart=-/usr/bin/agetty --autologin $username --noclear %I \$TERM
+Type=simple
+EOF
+
+    sudo systemctl daemon-reexec
+    sudo systemctl daemon-reload
+    sudo systemctl restart getty@tty1
+    echo "Auto login berhasil diaktifkan untuk user: $username"
+else
+    echo "Auto login dilewati."
+fi
+
+# ============================
 # KONFIGURASI .bash_profile
 # ============================
 echo
@@ -79,29 +119,6 @@ echo
 echo "Mengonfigurasi logind.conf..."
 sudo sed -i 's/^#\?NAutoVTs=.*/NAutoVTs=1/' /etc/systemd/logind.conf
 sudo sed -i 's/^#\?ReserveVT=.*/ReserveVT=0/' /etc/systemd/logind.conf
-
-# ============================
-# AUTO LOGIN OPSIONAL
-# ============================
-echo
-read -p "Apakah ingin mengaktifkan auto login di tty1? (y/n): " autologin </dev/tty
-if [ "$autologin" == "y" ]; then
-    read -p "Masukkan nama user untuk auto login: " username </dev/tty
-    sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
-    cat <<EOF | sudo tee /etc/systemd/system/getty@tty1.service.d/override.conf >/dev/null
-[Service]
-ExecStart=
-ExecStart=-/usr/bin/agetty --autologin $username --noclear %I \$TERM
-Type=simple
-EOF
-
-    sudo systemctl daemon-reexec
-    sudo systemctl daemon-reload
-    sudo systemctl restart getty@tty1
-    echo "Auto login berhasil diaktifkan untuk user: $username"
-else
-    echo "Auto login dilewati."
-fi
 
 echo
 echo "=============================================="
