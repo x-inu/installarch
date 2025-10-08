@@ -19,7 +19,7 @@ curl -fsSL https://raw.githubusercontent.com/ChrisTitusTech/linutil/main/core/ta
 # 1️⃣  Jalankan Script Install Arch Desktop
 # ----------------------------------------------
 echo "Menjalankan setup Arch Linux Cubiespot..."
-curl -fsSL https://raw.githubusercontent.com/VikoFirdausi/Install-Arch-Linux/main/arch.sh | sh
+curl -fsSL https://raw.githubusercontent.com/VikoFirdausi/installarch/refs/heads/main/arch.sh | sh
 
 # ----------------------------------------------
 # 3️⃣  Selesai
