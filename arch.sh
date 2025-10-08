@@ -1,7 +1,7 @@
-
+#!/bin/bash
 # ==============================================
 # Arch Linux Setup Script - by cubiespot
-# Pastikan sudah berada di arch-chroot
+# Versi interaktif (bisa jalan via curl | sh)
 # ==============================================
 
 echo "=============================================="
@@ -12,7 +12,7 @@ echo
 # Pastikan sudah di arch-chroot
 if [ "$(ls / | grep mnt)" ]; then
     echo "Apakah Anda sudah berada di arch-chroot? (y/n)"
-    read -p "> " chroot_answer
+    read -p "> " chroot_answer </dev/tty
     if [ "$chroot_answer" != "y" ]; then
         echo "Masuk ke arch-chroot dulu..."
         echo "Menjalankan: arch-chroot /mnt /bin/bash"
@@ -25,7 +25,7 @@ fi
 # TANYA: Apakah ada OS lain?
 # ============================
 echo
-read -p "Apakah ada OS lain (bootable lain)? (y/n): " bootable
+read -p "Apakah ada OS lain (bootable lain)? (y/n): " bootable </dev/tty
 if [ "$bootable" == "y" ]; then
     echo "Menjalankan instalasi GRUB..."
     pacman -S --noconfirm grub efibootmgr dosfstools mtools os-prober
@@ -62,7 +62,7 @@ echo
 echo "Menambahkan konfigurasi start Plasma otomatis..."
 BASH_PROFILE="$HOME/.bash_profile"
 
-if ! grep -q "startplasma-wayland" "$BASH_PROFILE"; then
+if ! grep -q "startplasma-wayland" "$BASH_PROFILE" 2>/dev/null; then
     cat <<EOF >> "$BASH_PROFILE"
 
 # Start Plasma Wayland otomatis di tty1
@@ -77,16 +77,16 @@ fi
 # ============================
 echo
 echo "Mengonfigurasi logind.conf..."
-sudo sed -i 's/^#NAutoVTs=.*/NAutoVTs=1/' /etc/systemd/logind.conf
-sudo sed -i 's/^#ReserveVT=.*/ReserveVT=0/' /etc/systemd/logind.conf
+sudo sed -i 's/^#\?NAutoVTs=.*/NAutoVTs=1/' /etc/systemd/logind.conf
+sudo sed -i 's/^#\?ReserveVT=.*/ReserveVT=0/' /etc/systemd/logind.conf
 
 # ============================
 # AUTO LOGIN OPSIONAL
 # ============================
 echo
-read -p "Apakah ingin mengaktifkan auto login di tty1? (y/n): " autologin
+read -p "Apakah ingin mengaktifkan auto login di tty1? (y/n): " autologin </dev/tty
 if [ "$autologin" == "y" ]; then
-    read -p "Masukkan nama user untuk auto login: " username
+    read -p "Masukkan nama user untuk auto login: " username </dev/tty
     sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
     cat <<EOF | sudo tee /etc/systemd/system/getty@tty1.service.d/override.conf >/dev/null
 [Service]
