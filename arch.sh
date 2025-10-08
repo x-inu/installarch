@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 # ==============================================
 # Arch Linux Setup Script - by cubiespot
 # Pastikan sudah berada di arch-chroot
