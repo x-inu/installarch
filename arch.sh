@@ -1,7 +1,6 @@
 #!/bin/bash
 # ==============================================
-# Arch Linux Setup Script - by cubiespot
-# Versi interaktif (bisa jalan via curl | sh)
+# Arch Linux Setup Script - by Xinu
 # ==============================================
 
 echo "=============================================="
@@ -71,6 +70,32 @@ kwin kdecoration spectacle kscreen plasma-systemmonitor plasma-pa kde-cli-tools 
 xorg-xwayland xdg-desktop-portal xdg-desktop-portal-kde mesa lib32-mesa vulkan-radeon \
 lib32-vulkan-radeon vulkan-icd-loader lib32-vulkan-icd-loader libva-mesa-driver \
 lib32-libva-mesa-driver pipewire pipewire-audio pipewire-pulse wireplumber linux-firmware
+
+
+# ============================
+# INSTALL YAY
+# ============================
+echo
+echo "=============================================="
+echo "   INSTALL YAY (AUR HELPER)"
+echo "=============================================="
+echo
+read -p "Apakah Anda ingin menginstall YAY (AUR Helper)? (y/n): " install_yay </dev/tty
+
+if [ "$install_yay" == "y" ]; then
+    echo
+    echo "Memulai instalasi YAY..."
+    sudo pacman -S --needed --noconfirm git base-devel
+    git clone https://aur.archlinux.org/yay.git
+    cd yay
+    makepkg -si --noconfirm
+    cd ..
+    rm -rf yay
+    echo
+    echo "YAY berhasil diinstal."
+else
+    echo "Instalasi YAY dilewati."
+fi
 
 # ============================
 # AUTO LOGIN OPSIONAL
