@@ -32,7 +32,7 @@ echo
 read -p "Apakah Anda ingin mengatur password root sekarang? (y/n): " setroot </dev/tty
 if [ "$setroot" == "y" ]; then
     echo "Masukkan password untuk root:"
-    passwd root
+    passwd </dev/tty
     echo "Password root berhasil diatur."
 else
     echo "Password root dilewati (disarankan untuk diset manual nanti)."
