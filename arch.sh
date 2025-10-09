@@ -100,8 +100,41 @@ fi
 # ============================
 echo
 echo "Menambahkan konfigurasi start Plasma otomatis..."
-BASH_PROFILE="$HOME/.bash_profile"
 
+# Cari semua user yang punya direktori di /home
+USER_LIST=($(ls /home 2>/dev/null))
+
+if [ ${#USER_LIST[@]} -eq 0 ]; then
+    echo "Tidak ditemukan direktori /home/<user>."
+    echo "Menggunakan /root/.bash_profile sebagai default."
+    TARGET_HOME="/root"
+else
+    if [ ${#USER_LIST[@]} -eq 1 ]; then
+        TARGET_USER=${USER_LIST[0]}
+        echo "Ditemukan user: $TARGET_USER"
+    else
+        echo "Ditemukan beberapa user di /home/:"
+        i=1
+        for u in "${USER_LIST[@]}"; do
+            echo "  $i) $u"
+            ((i++))
+        done
+        echo
+        read -p "Pilih user untuk dikonfigurasi (masukkan angka): " pilihan </dev/tty
+        TARGET_USER=${USER_LIST[$((pilihan-1))]}
+    fi
+    TARGET_HOME="/home/$TARGET_USER"
+fi
+
+BASH_PROFILE="$TARGET_HOME/.bash_profile"
+
+# Buat file jika belum ada
+if [ ! -f "$BASH_PROFILE" ]; then
+    touch "$BASH_PROFILE"
+    chown "$TARGET_USER:$TARGET_USER" "$BASH_PROFILE" 2>/dev/null
+fi
+
+# Tambahkan konfigurasi jika belum ada
 if ! grep -q "startplasma-wayland" "$BASH_PROFILE" 2>/dev/null; then
     cat <<EOF >> "$BASH_PROFILE"
 
@@ -110,6 +143,9 @@ if [[ -z \$DISPLAY ]] && [[ \$(tty) = /dev/tty1 ]]; then
   exec startplasma-wayland
 fi
 EOF
+    echo "Konfigurasi ditambahkan ke: $BASH_PROFILE"
+else
+    echo "Konfigurasi sudah ada di $BASH_PROFILE, dilewati."
 fi
 
 # ============================
