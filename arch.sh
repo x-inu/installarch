@@ -3,10 +3,11 @@
 # Arch Linux Setup Script - by Xinu
 # ==============================================
 
-echo "=============================================="
-echo "   SCRIPT INSTALL ARCH + KDE PLASMA AUTOMATIS  "
-echo "=============================================="
-echo
+echo -ne "
+==============================================
+|        SCRIPT INSTALL ARCH DESKTOP         |  
+==============================================
+"
  
 # Pastikan sudah di arch-chroot
 if [ "$(ls / | grep mnt)" ]; then
@@ -23,11 +24,12 @@ fi
 # ============================
 # BUAT PASSWORD ROOT
 # ============================
-echo
-echo "=============================================="
-echo "   SETUP PASSWORD ROOT"
-echo "=============================================="
-echo
+echo -ne "
+==============================================
+|            SETUP PASSWORD ROOT             |
+==============================================
+"
+
 read -p "Apakah Anda ingin mengatur password root sekarang? (y/n): " setroot </dev/tty
 if [ "$setroot" == "y" ]; then
     echo "Masukkan password untuk root:"
@@ -75,11 +77,12 @@ lib32-libva-mesa-driver pipewire pipewire-audio pipewire-pulse wireplumber linux
 # ============================
 # INSTALL YAY
 # ============================
-echo
-echo "=============================================="
-echo "   INSTALL YAY (AUR HELPER)"
-echo "=============================================="
-echo
+echo -ne "
+==============================================
+|          INSTALL YAY (AUR HELPER)          |
+==============================================
+"
+
 read -p "Apakah Anda ingin menginstall YAY (AUR Helper)? (y/n): " install_yay </dev/tty
 
 if [ "$install_yay" == "y" ]; then
@@ -181,7 +184,8 @@ echo "Mengonfigurasi logind.conf..."
 sudo sed -i 's/^#\?NAutoVTs=.*/NAutoVTs=1/' /etc/systemd/logind.conf
 sudo sed -i 's/^#\?ReserveVT=.*/ReserveVT=0/' /etc/systemd/logind.conf
 
-echo
-echo "=============================================="
-echo "   Instalasi dan konfigurasi selesai!"
-echo "=============================================="
+echo -ne "
+==============================================
+|     Instalasi dan konfigurasi selesai!     |
+==============================================
+"
