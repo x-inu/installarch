@@ -14,18 +14,28 @@ echo
 echo "Menjalankan script setup server"
 curl -fsSL https://raw.githubusercontent.com/x-inu/installarch/refs/heads/main/archserver.sh | sh
 
-# ----------------------------------------------
-# 1️⃣  Jalankan Script Install Arch Desktop
-# ----------------------------------------------
-echo "Menjalankan setup Arch Desktop"
-curl -fsSL https://raw.githubusercontent.com/x-inu/installarch/refs/heads/main/archdesktop.sh | sh
 
-# ----------------------------------------------
-# 3️⃣  Selesai
-# ----------------------------------------------
-echo -ne "
-==============================================
-|     SELESAI ARCHLINUX TELAH TERINSTALL     | 
-==============================================
-"
+read -p "Apakah Anda ingin Menginstall Arch Desktop (y/n): " desktop </dev/tty
+if [ "$setroot" == "y" ]; then
+    # ----------------------------------------------
+    # 1️⃣  Jalankan Script Install Arch Desktop
+    # ----------------------------------------------
+    echo "Menjalankan setup Arch Desktop"
+    curl -fsSL https://raw.githubusercontent.com/x-inu/installarch/refs/heads/main/archdesktop.sh | sh
+
+
+    
+    
+else
+   # ----------------------------------------------
+   # 3️⃣  Selesai
+   # ----------------------------------------------
+   echo -ne "
+   ==============================================
+   |     SELESAI ARCHLINUX TELAH TERINSTALL     | 
+   ==============================================
+   "
+fi
+
+
  
