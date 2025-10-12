@@ -16,7 +16,7 @@ curl -fsSL https://raw.githubusercontent.com/x-inu/installarch/refs/heads/main/a
 
 
 read -p "Apakah Anda ingin Menginstall Arch Desktop (y/n): " desktop </dev/tty
-if [ "$setroot" == "y" ]; then
+if [ "$desktop" == "y" ]; then
     # ----------------------------------------------
     # 1️⃣  Jalankan Script Install Arch Desktop
     # ----------------------------------------------
