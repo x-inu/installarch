@@ -11,14 +11,20 @@ echo -ne "
  
 # Pastikan sudah di arch-chroot
 if [ "$(ls / | grep mnt)" ]; then
-    echo "Apakah Anda sudah berada di arch-chroot? (y/n)"
-    read -p "> " chroot_answer </dev/tty
-    if [ "$chroot_answer" != "y" ]; then
-        echo "Masuk ke arch-chroot dulu..."
-        echo "Menjalankan: arch-chroot /mnt /bin/bash"
-        arch-chroot /mnt /bin/bash
-        exit
-    fi
+    echo "Apakah Anda sudah berada di dalam arch-chroot? (y/n)"
+    while true; do
+        read -p "> " chroot_answer </dev/tty
+        if [ "$chroot_answer" == "y" ]; then
+            break
+        elif [ "$chroot_answer" == "n" ]; then
+            echo "Silakan masuk ke dalam arch-chroot terlebih dahulu..."
+            echo "Menjalankan: arch-chroot /mnt /bin/bash"
+            arch-chroot /mnt /bin/bash
+            exit
+        else
+            echo "Input tidak valid! Harap masukkan 'y' atau 'n'."
+        fi
+    done
 fi
 
 
@@ -39,18 +45,27 @@ echo -ne "
 ==============================================
 "
 
-read -p "Apakah Anda ingin mengatur password root sekarang? (y/n): " setroot </dev/tty
-if [ "$setroot" == "y" ]; then
-    echo "Masukkan password untuk root:"
-    passwd </dev/tty
-    echo "Password root berhasil diatur."
-else
-    echo "Password root dilewati (disarankan untuk diset manual nanti)."
-fi
+while true; do
+    read -p "Apakah Anda ingin mengatur password root sekarang? (y/n): " setroot </dev/tty
 
-echo -e "\n=============================================="
-echo "              ADD NEW USER                    "
-echo "=============================================="
+    if [ "$setroot" == "y" ]; then
+        echo "Masukkan password untuk root:"
+        passwd </dev/tty
+        echo "Password root berhasil diatur."
+        break
+    elif [ "$setroot" == "n" ]; then
+        echo "Password root dilewati (disarankan untuk diset manual nanti)."
+        break
+    else
+        echo "Input tidak valid! Harap masukkan 'y' atau 'n'."
+    fi
+done
+
+echo -ne "
+==============================================
+|             ADD NEW USER                   | 
+==============================================
+"
 
 read -p "Masukkan nama user baru: " NEWUSER </dev/tty
 [ -z "$NEWUSER" ] && { echo "Nama user tidak boleh kosong!"; exit 1; }
@@ -64,7 +79,7 @@ else
 fi
 
 # Pastikan sudo terpasang dan grup wheel aktif
-pacman -Sy --noconfirm sudo >/dev/null 2>&1
+pacman -Sy --noconfirm --needed sudo >/dev/null 2>&1
 grep -q "^%wheel" /etc/sudoers || echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
 
 echo -e "\nUser '$NEWUSER' siap digunakan dengan akses sudo."
@@ -98,12 +113,12 @@ echo -e "\nUser '$NEWUSER' siap digunakan dengan akses sudo."
 # ============================
 echo
 echo "Memulai instalasi KDE Plasma..."
-sudo pacman -S --noconfirm plasma-desktop plasma-workspace qt5-wayland qt6-wayland \
+sudo pacman -S --noconfirm --needed plasma-desktop plasma-workspace qt5-wayland qt6-wayland \
 konsole kwalletmanager ark nano dolphin kate networkmanager plasma-nm kde-gtk-config \
 kwin kdecoration spectacle kscreen plasma-systemmonitor plasma-pa kde-cli-tools \
-xorg-xwayland xdg-desktop-portal xdg-desktop-portal-kde mesa lib32-mesa vulkan-radeon \
-lib32-vulkan-radeon vulkan-icd-loader lib32-vulkan-icd-loader libva-mesa-driver \
-lib32-libva-mesa-driver pipewire pipewire-audio pipewire-pulse wireplumber linux-firmware
+xorg-xwayland xdg-desktop-portal xdg-desktop-portal-kde mesa vulkan-radeon \
+vulkan-icd-loader libva-mesa-driver \
+pipewire pipewire-audio pipewire-pulse wireplumber linux-firmware
 
 
 # ============================
