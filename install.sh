@@ -11,34 +11,32 @@ echo -ne "
 # 2️⃣  Jalankan Script Server Setup 
 # ----------------------------------------------
 echo
-read -p "Apakah Anda ingin melanjutkan instalasi Arch Desktop (KDE Plasma)? (y/n): " desktop </dev/tty
+echo "Menjalankan script setup server"
+curl -fsSL https://raw.githubusercontent.com/x-inu/installarch/refs/heads/main/archserver.sh | sh
+
 
 while true; do
+    read -p "Apakah Anda ingin Menginstall Arch Desktop (y/n): " desktop </dev/tty
     if [ "$desktop" == "y" ]; then
         # ----------------------------------------------
         # 1️⃣  Jalankan Script Install Arch Desktop
         # ----------------------------------------------
-        echo
         echo "Menjalankan setup Arch Desktop..."
         curl -fsSL https://raw.githubusercontent.com/x-inu/installarch/refs/heads/main/archdesktop.sh | sh
         break
 
     elif [ "$desktop" == "n" ]; then
         # ----------------------------------------------
-        # 2️⃣  Selesai
+        # 3️⃣  Selesai
         # ----------------------------------------------
         echo -ne "
-==============================================
-|     SELESAI — ARCH LINUX TELAH TERINSTALL   |
-==============================================
-"
+   ==============================================
+   |     SELESAI ARCHLINUX TELAH TERINSTALL     | 
+   ==============================================
+   "
         break
 
     else
         echo "Input tidak valid! Harap masukkan 'y' atau 'n'."
-        read -p "> " desktop </dev/tty
     fi
 done
-
-
- 
