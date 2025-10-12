@@ -193,15 +193,6 @@ export LANG=en_US.UTF-8
 echo
 
 # ============================
-# SET HOST NAME
-# ============================
-read -p "Masukkan hostname (default: archlinux): " host </dev/tty
-[ -z "$host" ] && host="archlinux"
-echo "$host" > /etc/hostname
-echo "Hostname diset ke: $host"
-echo
-
-# ============================
 # SETUP MIRROR TERVERCEPAT
 # ============================
 echo
