@@ -21,9 +21,18 @@ if [ "$(ls / | grep mnt)" ]; then
     fi
 fi
 
-# ============================
-# BUAT PASSWORD ROOT
-# ============================
+
+echo -ne "
+==============================================
+|              SETUP HOSTNAME                |
+==============================================
+"
+read -p "Masukkan hostname (default: archlinux): " host </dev/tty
+[ -z "$host" ] && host="archlinux"
+echo "$host" > /etc/hostname
+echo "Hostname diset ke: $host"
+echo
+
 echo -ne "
 ==============================================
 |            SETUP PASSWORD ROOT             |
@@ -38,6 +47,29 @@ if [ "$setroot" == "y" ]; then
 else
     echo "Password root dilewati (disarankan untuk diset manual nanti)."
 fi
+
+echo -e "\n=============================================="
+echo "              ADD NEW USER                    "
+echo "=============================================="
+
+read -p "Masukkan nama user baru: " NEWUSER </dev/tty
+[ -z "$NEWUSER" ] && { echo "Nama user tidak boleh kosong!"; exit 1; }
+
+if id "$NEWUSER" &>/dev/null; then
+    echo "User '$NEWUSER' sudah ada."
+else
+    useradd -m -G wheel -s /bin/bash "$NEWUSER"
+    echo "Buat password untuk $NEWUSER:"
+    passwd "$NEWUSER"
+fi
+
+# Pastikan sudo terpasang dan grup wheel aktif
+pacman -Sy --noconfirm sudo >/dev/null 2>&1
+grep -q "^%wheel" /etc/sudoers || echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
+
+echo -e "\nUser '$NEWUSER' siap digunakan dengan akses sudo."
+
+
 
 # ============================
 # TANYA: Apakah ada OS lain?
@@ -77,32 +109,34 @@ lib32-libva-mesa-driver pipewire pipewire-audio pipewire-pulse wireplumber linux
 # ============================
 # INSTALL YAY
 # ============================
+#echo -ne "
+#==============================================
+#|          INSTALL YAY (AUR HELPER)          |
+#==============================================
+#"
+
+#read -p "Apakah Anda ingin menginstall YAY (AUR Helper)? (y/n): " install_yay </dev/tty
+
+#if [ "$install_yay" == "y" ]; then
+#    echo
+#    echo "Memulai instalasi YAY..."
+#    sudo pacman -S --needed --noconfirm git base-devel
+#    git clone https://aur.archlinux.org/yay.git
+#    cd yay
+#    makepkg -si --noconfirm
+#    cd ..
+#    rm -rf yay
+#    echo
+#    echo "YAY berhasil diinstal."
+#else
+#    echo "Instalasi YAY dilewati."
+#fi
+
 echo -ne "
 ==============================================
-|          INSTALL YAY (AUR HELPER)          |
+|                 AUTO LOGIN                 |
 ==============================================
 "
-
-read -p "Apakah Anda ingin menginstall YAY (AUR Helper)? (y/n): " install_yay </dev/tty
-
-if [ "$install_yay" == "y" ]; then
-    echo
-    echo "Memulai instalasi YAY..."
-    sudo pacman -S --needed --noconfirm git base-devel
-    git clone https://aur.archlinux.org/yay.git
-    cd yay
-    makepkg -si --noconfirm
-    cd ..
-    rm -rf yay
-    echo
-    echo "YAY berhasil diinstal."
-else
-    echo "Instalasi YAY dilewati."
-fi
-
-# ============================
-# AUTO LOGIN OPSIONAL
-# ============================
 echo
 read -p "Apakah ingin mengaktifkan auto login di tty1? (y/n): " autologin </dev/tty
 if [ "$autologin" == "y" ]; then
