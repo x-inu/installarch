@@ -1,9 +1,11 @@
 #!/bin/bash
 
-echo "=============================================="
-echo "       SCRIPT FULL INSTALL ARCH LINUX         "
-echo "=============================================="
-echo
+echo -ne "
+==============================================
+|       SCRIPT FULL INSTALL ARCH LINUX       | 
+==============================================
+"
+
 
 # ----------------------------------------------
 # 2️⃣  Jalankan Script Server Setup 
@@ -21,8 +23,9 @@ curl -fsSL https://raw.githubusercontent.com/x-inu/installarch/refs/heads/main/a
 # ----------------------------------------------
 # 3️⃣  Selesai
 # ----------------------------------------------
-echo
-echo "=============================================="
-echo "   SEMUA SCRIPT TELAH SELESAI DIJALANKAN!"
-echo "=============================================="
+echo -ne "
+==============================================
+|     SELESAI ARCHLINUX TELAH TERINSTALL     | 
+==============================================
+"
  
