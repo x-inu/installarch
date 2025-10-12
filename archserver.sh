@@ -168,11 +168,14 @@ arch-chroot /mnt /bin/bash <<EOF
 # ============================
 # --- Deteksi dan Set Timezone Otomatis ---
 echo "Mendeteksi timezone otomatis berdasarkan lokasi..."
-DETECTED_TZ=$(curl -s https://ipapi.co/timezone)
+time_zone="$(curl --fail https://ipapi.co/timezone)"
+echo -ne "
+System detected your timezone to be '$time_zone' 
+"
 
 if [ -n "$DETECTED_TZ" ]; then
-    echo "Timezone terdeteksi: $DETECTED_TZ"
-    ln -sf "/usr/share/zoneinfo/$DETECTED_TZ" /etc/localtime
+    echo "Timezone terdeteksi: $time_zone"
+    ln -sf "/usr/share/zoneinfo/$time_zone" /etc/localtime
 else
     echo "Gagal mendeteksi timezone, menggunakan default: UTC"
     ln -sf /usr/share/zoneinfo/UTC /etc/localtime
