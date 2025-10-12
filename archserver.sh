@@ -200,8 +200,10 @@ echo
 # INSTALASI BOOTLOADER
 # ============================
 if [ "$MODE" = "UEFI" ]; then
-    pacman -S --noconfirm grub efibootmgr dosfstools mtools
-    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+    pacman -S --noconfirm grub efibootmgr dosfstools mtools os-prober
+    grub-install --removable --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+    sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
+    
 else
     pacman -S --noconfirm grub
     grub-install --target=i386-pc $DISK_PATH
@@ -209,19 +211,7 @@ fi
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
-# ============================
-# SET PASSWORD ROOT
-# ============================
-echo "Set password root:"
-passwd root
-
-EOF
-
-# ============================
-# SELESAI
-# ============================
 echo
 echo "=============================================="
 echo "  INSTALASI ARCH LINUX SELESAI!"
-echo "  Anda bisa reboot sekarang."
 echo "=============================================="
