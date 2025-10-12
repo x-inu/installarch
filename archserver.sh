@@ -186,7 +186,6 @@ echo "LANG=en_US.UTF-8" > /etc/locale.conf
 export LANG=en_US.UTF-8
 echo
 
-
 # ============================
 # SET HOST NAME
 # ============================
@@ -194,6 +193,43 @@ read -p "Masukkan hostname (default: archlinux): " host </dev/tty
 [ -z "$host" ] && host="archlinux"
 echo "$host" > /etc/hostname
 echo "Hostname diset ke: $host"
+echo
+
+# ============================
+# SETUP MIRROR TERVERCEPAT
+# ============================
+echo
+echo "=============================================="
+echo "     MENCARI DAN MENGATUR MIRROR TERVERCEPAT"
+echo "=============================================="
+echo
+
+# Pastikan reflector terpasang
+if ! pacman -Qi reflector &>/dev/null; then
+    echo "Menginstal reflector..."
+    pacman -Sy --noconfirm reflector
+fi
+
+# Backup mirrorlist lama
+cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak 2>/dev/null
+
+# Gunakan reflector untuk memilih mirror tercepat dari server terdekat
+echo "Mendeteksi dan mengatur mirror tercepat..."
+reflector --country "$(curl -s https://ipapi.co/country_name)" \
+  --protocol https \
+  --sort rate \
+  --latest 10 \
+  --save /etc/pacman.d/mirrorlist
+
+# Jika gagal, fallback ke mirror default global
+if [ $? -ne 0 ]; then
+    echo "Gagal mendeteksi mirror berdasarkan lokasi. Menggunakan default global..."
+    reflector --latest 10 --sort rate --protocol https --save /etc/pacman.d/mirrorlist
+fi
+
+echo
+echo "Mirror tercepat berhasil diatur:"
+head -n 10 /etc/pacman.d/mirrorlist
 echo
 
 # ============================
