@@ -10,7 +10,7 @@ echo
 # ----------------------------------------------
 echo
 echo "Menjalankan script setup server"
-curl -fsSL /raw.githubusercontent.com/x-inu/installarch/refs/heads/main/archserver.sh | sh
+curl -fsSL raw.githubusercontent.com/x-inu/installarch/refs/heads/main/archserver.sh | sh
 
 # ----------------------------------------------
 # 1️⃣  Jalankan Script Install Arch Desktop
