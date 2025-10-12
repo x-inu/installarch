@@ -60,7 +60,7 @@ if id "$NEWUSER" &>/dev/null; then
 else
     useradd -m -G wheel -s /bin/bash "$NEWUSER"
     echo "Buat password untuk $NEWUSER:"
-    passwd "$NEWUSER"
+    passwd "$NEWUSER" </dev/tty
 fi
 
 # Pastikan sudo terpasang dan grup wheel aktif
