@@ -233,6 +233,9 @@ echo "Mengonfigurasi logind.conf..."
 sudo sed -i 's/^#\?NAutoVTs=.*/NAutoVTs=1/' /etc/systemd/logind.conf
 sudo sed -i 's/^#\?ReserveVT=.*/ReserveVT=0/' /etc/systemd/logind.conf
 
+systemctl enable NetworkManager
+systemctl restart NetworkManager
+
 echo -ne "
 ==============================================
 |     Instalasi dan konfigurasi selesai!     |
