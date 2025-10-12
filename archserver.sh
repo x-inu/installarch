@@ -144,6 +144,9 @@ fi
 # ============================
 echo
 echo "Menginstal sistem dasar..."
+timedatectl set-ntp true
+pacman -Sy
+pacman -S --noconfirm archlinux-keyring
 pacstrap /mnt base linux linux-firmware nano --noconfirm
 
 # ============================
