@@ -204,7 +204,7 @@ echo
 # Pastikan reflector terpasang
 if ! pacman -Qi reflector &>/dev/null; then
     echo "Menginstal reflector..."
-    pacman -Sy --noconfirm reflector
+    pacman -Sy --noconfirm --needed reflector
 fi
 
 # Backup mirrorlist lama
@@ -233,12 +233,12 @@ echo
 # INSTALASI BOOTLOADER
 # ============================
 if [ "$MODE" = "UEFI" ]; then
-    pacman -S --noconfirm grub efibootmgr dosfstools mtools os-prober
+    pacman -S --noconfirm --needed grub efibootmgr dosfstools mtools os-prober
     grub-install --removable --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
     sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
     
 else
-    pacman -S --noconfirm grub
+    pacman -S --noconfirm --needed grub
     grub-install --target=i386-pc $DISK_PATH
 fi
 
