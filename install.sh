@@ -1,15 +1,12 @@
 #!/bin/bash
-# ==============================================
-# Arch Linux Full Setup - Cubiespot + Chris Titus
-# ==============================================
 
 echo "=============================================="
-echo "   SCRIPT FULL INSTALL ARCH + KDE + SERVER     "
+echo "       SCRIPT FULL INSTALL ARCH LINUX         "
 echo "=============================================="
 echo
 
 # ----------------------------------------------
-# 2️⃣  Jalankan Script Server Setup dari Chris Titus Tech
+# 2️⃣  Jalankan Script Server Setup 
 # ----------------------------------------------
 echo
 echo "Menjalankan script setup server"
