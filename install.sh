@@ -12,14 +12,14 @@ echo
 # 2️⃣  Jalankan Script Server Setup dari Chris Titus Tech
 # ----------------------------------------------
 echo
-echo "Menjalankan script setup server dari Chris Titus Tech..."
-curl -fsSL https://raw.githubusercontent.com/ChrisTitusTech/linutil/main/core/tabs/system-setup/arch/server-setup.sh | sh
+echo "Menjalankan script setup server"
+curl -fsSL /raw.githubusercontent.com/x-inu/installarch/refs/heads/main/archserver.sh | sh
 
 # ----------------------------------------------
 # 1️⃣  Jalankan Script Install Arch Desktop
 # ----------------------------------------------
-echo "Menjalankan setup Arch Linux Cubiespot..."
-curl -fsSL https://raw.githubusercontent.com/VikoFirdausi/installarch/refs/heads/main/arch.sh | sh
+echo "Menjalankan setup Arch Desktop"
+curl -fsSL raw.githubusercontent.com/x-inu/installarch/refs/heads/main/archdesktop.sh | sh
 
 # ----------------------------------------------
 # 3️⃣  Selesai
