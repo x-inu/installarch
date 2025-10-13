@@ -94,7 +94,7 @@ if [ "$PART_OPTION" == "2" ]; then
     echo "Tekan 'Write' untuk menyimpan lalu 'Quit'."
     echo
     sleep 2
-    cfdisk "$DISK_PATH"
+    cfdisk "$DISK_PATH" </dev/tty
     echo
     echo "Selesai konfigurasi manual."
     lsblk "$DISK_PATH"
