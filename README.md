@@ -4,9 +4,9 @@ just if u want install arch Without SDDM (lockscreen)
 
 
 
-## Deployment
+## How to Use 
 
-To deploy this project run
+To use this project run
 
 ```bash
   curl -fsSL https://raw.githubusercontent.com/x-inu/installarch/refs/heads/main/install.sh | sh
