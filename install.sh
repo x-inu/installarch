@@ -6,14 +6,9 @@ while true; do
     echo "|       SCRIPT FULL INSTALL ARCH LINUX       |"
     echo "=============================================="
     echo
-    echo -n "1) Install ArchServer"
-    [[ "$last_choice" == "1" ]] && echo "  <-- Terakhir dijalankan"
-    echo -n "2) Install ArchDesktop"
-    [[ "$last_choice" == "2" ]] && echo "  <-- Terakhir dijalankan"
-    echo -n "3) Keluar"
-    [[ "$last_choice" == "3" ]] && echo "  <-- Keluar dari menu"
-    echo
-
+    echo "1) Install ArchServer" 
+    echo "2) Install ArchDesktop" 
+    echo "3) Keluar"
     read -p "Pilih nomor [1-3]: " choice </dev/tty
     case "$choice" in
         1)
