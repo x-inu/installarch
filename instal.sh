@@ -235,9 +235,10 @@ setup_logind() {
     echo "✅ logind.conf telah dikonfigurasi dan NetworkManager aktif."
 }
 
-# ------------------------------------------------------------
-# MAIN EXECUTION FLOW
-# ------------------------------------------------------------
+# ==============================================
+#   EKSEKUSI UTAMA (main)
+# ==============================================
+
 banner
 check_chroot
 setup_hostname
@@ -249,5 +250,8 @@ setup_autologin
 setup_bash_profile
 setup_logind
 
-section "INSTALASI DAN KONFIGURASI SELESAI!"
-echo "✅ Arch Linux Desktop dengan KDE Plasma berhasil diinstal!"
+echo
+echo "=============================================="
+echo "|  Arch Linux Desktop dengan KDE Plasma       |"
+echo "|             berhasil diinstal!              |"
+echo "=============================================="
