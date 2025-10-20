@@ -1,7 +1,4 @@
 #!/bin/bash
-# ==============================================
-# Arch Linux Setup Script - by Xinu
-# ==============================================
 
 echo -ne "
 ==============================================
@@ -10,21 +7,12 @@ echo -ne "
 "
  
 # Pastikan sudah di arch-chroot
-if [ "$(ls / | grep mnt)" ]; then
-    echo "Apakah Anda sudah berada di dalam arch-chroot? (y/n)"
-    while true; do
-        read -p "> " chroot_answer </dev/tty
-        if [ "$chroot_answer" == "y" ]; then
-            break
-        elif [ "$chroot_answer" == "n" ]; then
-            echo "Silakan masuk ke dalam arch-chroot terlebih dahulu..."
-            echo "Menjalankan: arch-chroot /mnt /bin/bash"
-            arch-chroot /mnt /bin/bash
-            exit
-        else
-            echo "Input tidak valid! Harap masukkan 'y' atau 'n'."
-        fi
-    done
+if grep -q '/mnt ' /proc/mounts; then
+    echo "📍 Belum berada di dalam arch-chroot. Memasuki chroot..."
+    echo "▶ Menjalankan: arch-chroot /mnt /bin/bash"
+    exec arch-chroot /mnt /bin/bash
+else
+    echo "✅ Deteksi: Anda sudah berada di dalam arch-chroot. Melanjutkan setup..."
 fi
 
 
@@ -78,13 +66,10 @@ else
     passwd "$NEWUSER" </dev/tty
 fi
 
-# Pastikan sudo terpasang dan grup wheel aktif
 pacman -Sy --noconfirm --needed sudo >/dev/null 2>&1
 grep -q "^%wheel" /etc/sudoers || echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
 
 echo -e "\nUser '$NEWUSER' siap digunakan dengan akses sudo."
-
-
 
 # ============================
 # TANYA: Apakah ada OS lain?
@@ -108,18 +93,84 @@ echo -e "\nUser '$NEWUSER' siap digunakan dengan akses sudo."
 #    echo "Tidak ada bootable lain, lewati instalasi GRUB."
 #fi
 
-# ============================
-# INSTALL KDE PLASMA
-# ============================
-echo
-echo "Memulai instalasi KDE Plasma..."
-sudo pacman -S --noconfirm --needed plasma-desktop plasma-workspace qt5-wayland qt6-wayland \
-konsole kwalletmanager ark nano dolphin kate networkmanager plasma-nm kde-gtk-config \
-kwin kdecoration spectacle kscreen plasma-systemmonitor plasma-pa kde-cli-tools \
-xorg-xwayland xdg-desktop-portal xdg-desktop-portal-kde mesa vulkan-radeon \
-vulkan-icd-loader libva-mesa-driver \
-pipewire pipewire-audio pipewire-pulse wireplumber linux-firmware
+echo -ne "
+==============================================
+|        INSTALL ARCH DESKTOP KDE             |
+==============================================
+"
 
+install_kde_tools() {
+    echo
+    echo "Memulai instalasi KDE Plasma dan aplikasi pendukung..."
+
+    sudo pacman -S --noconfirm --needed \
+    plasma-desktop plasma-workspace konsole kwalletmanager ark nano dolphin kate \
+    networkmanager plasma-nm kde-gtk-config kwin kdecoration spectacle kscreen \
+    plasma-systemmonitor plasma-pa kde-cli-tools xorg-xwayland xdg-desktop-portal \
+    xdg-desktop-portal-kde pipewire pipewire-audio pipewire-pulse wireplumber linux-firmware
+
+    echo "Instalasi tool KDE Plasma selesai."
+}
+
+install_amd_driver() {
+    echo "Memasang driver AMD..."
+    sudo pacman -S --noconfirm --needed mesa vulkan-radeon vulkan-icd-loader libva-mesa-driver
+    echo "Driver AMD terpasang."
+}
+
+install_intel_driver() {
+    echo "Memasang driver INTEL..."
+    sudo pacman -S --noconfirm --needed mesa vulkan-intel vulkan-icd-loader libva-mesa-driver
+    echo "Driver INTEL terpasang."
+}
+
+install_nvidia_driver() {
+    echo "Memasang driver NVIDIA..."
+    sudo pacman -S --noconfirm --needed nvidia nvidia-utils nvidia-settings
+    echo "Driver NVIDIA terpasang."
+}
+
+install_all_drivers() {
+    echo "Memasang semua driver VGA..."
+    sudo pacman -S --noconfirm --needed \
+    mesa vulkan-radeon vulkan-intel vulkan-icd-loader libva-mesa-driver \
+    nvidia nvidia-utils nvidia-settings
+    echo "Semua driver VGA terpasang."
+}
+
+echo
+echo "Pilih driver VGA yang ingin diinstall:"
+echo "  1) AMD Driver"
+echo "  2) INTEL Driver"
+echo "  3) NVIDIA Driver"
+echo "  4) Install Semua Driver"
+
+while true; do
+    read -p "Masukkan pilihan [1-4]: " vga_choice </dev/tty
+    case "$vga_choice" in
+        1)
+            install_amd_driver
+            break
+            ;;
+        2)
+            install_intel_driver
+            break
+            ;;
+        3)
+            install_nvidia_driver
+            break
+            ;;
+        4)
+            install_all_drivers
+            break
+            ;;
+        *)
+            echo "❌ Pilihan tidak valid! Masukkan angka 1-4."
+            ;;
+    esac
+done
+
+install_kde_tools
 
 # ============================
 # INSTALL YAY
@@ -153,24 +204,33 @@ echo -ne "
 ==============================================
 "
 echo
-read -p "Apakah ingin mengaktifkan auto login di tty1? (y/n): " autologin </dev/tty
-if [ "$autologin" == "y" ]; then
-    read -p "Masukkan nama user untuk auto login: " username </dev/tty
-    sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
-    cat <<EOF | sudo tee /etc/systemd/system/getty@tty1.service.d/override.conf >/dev/null
+while true; do
+    read -p "Apakah ingin mengaktifkan auto login di tty1? (y/n): " autologin </dev/tty
+    case "$autologin" in
+        y|Y)
+            read -p "Masukkan nama user untuk auto login: " username </dev/tty
+            sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
+            sudo tee /etc/systemd/system/getty@tty1.service.d/override.conf >/dev/null <<EOF
 [Service]
 ExecStart=
 ExecStart=-/usr/bin/agetty --autologin $username --noclear %I \$TERM
 Type=simple
 EOF
-
-    sudo systemctl daemon-reexec
-    sudo systemctl daemon-reload
-    sudo systemctl restart getty@tty1
-    echo "Auto login berhasil diaktifkan untuk user: $username"
-else
-    echo "Auto login dilewati."
-fi
+            sudo systemctl daemon-reexec
+            sudo systemctl daemon-reload
+            sudo systemctl restart getty@tty1
+            echo "✅ Auto login berhasil diaktifkan untuk user: $username"
+            break
+            ;;
+        n|N)
+            echo "⚠️ Auto login dilewati."
+            break
+            ;;
+        *)
+            echo "❌ Input tidak valid! Masukkan 'y' atau 'n'."
+            ;;
+    esac
+done
 
 # ============================
 # KONFIGURASI .bash_profile
