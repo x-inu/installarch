@@ -37,94 +37,135 @@ if [ -d /sys/firmware/efi ]; then
 else
     MODE="BIOS"
 fi
-echo "Mode boot terdeteksi: $MODE"
+echo "✅ Mode boot terdeteksi: $MODE"
 
 # ============================
 # CEK DISK YANG AKAN DIGUNAKAN
 # ============================
-echo
-echo "Mendeteksi disk yang tersedia..."
-echo "----------------------------------------------"
+while true; do
+    echo
+    echo "📦 Mendeteksi disk yang tersedia..."
+    echo "----------------------------------------------"
 
-# Ambil daftar disk utama saja (bukan partisi)
-DISKS=($(lsblk -d -n -p -o NAME,SIZE | awk '{print $1}'))
-SIZES=($(lsblk -d -n -p -o NAME,SIZE | awk '{print $2}'))
+    # Ambil daftar disk utama saja (bukan partisi)
+    DISKS=($(lsblk -d -n -p -o NAME))
+    SIZES=($(lsblk -d -n -p -o SIZE))
 
-# Tampilkan daftar
-for i in "${!DISKS[@]}"; do
-    echo "[$((i+1))] ${DISKS[$i]} (${SIZES[$i]})"
+    # Jika tidak ada disk, keluar
+    if [ ${#DISKS[@]} -eq 0 ]; then
+        echo "❌ Tidak ada disk terdeteksi."
+        exit 1
+    fi
+
+    # Tampilkan daftar
+    for i in "${!DISKS[@]}"; do
+        echo "  [$((i+1))] ${DISKS[$i]} (${SIZES[$i]})"
+    done
+    echo "----------------------------------------------"
+
+    read -p "🖋️  Pilih nomor disk yang akan digunakan: " choice </dev/tty
+
+    # Validasi input: harus angka dan dalam rentang
+    if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#DISKS[@]} )); then
+        DISK_PATH="${DISKS[$((choice-1))]}"
+        echo -e "\n✅ Disk terpilih: $DISK_PATH"
+        
+        # Konfirmasi dengan validasi y/n
+        while true; do
+            read -p "⚠️  Semua data di $DISK_PATH akan dihapus. Lanjutkan? (y/n): " confirm </dev/tty
+            case "$confirm" in
+                y|Y)
+                    echo "🔓 Melanjutkan instalasi..."
+                    break 2  # Keluar dari dua loop: konfirmasi & pemilihan disk
+                    ;;
+                n|N)
+                    echo "❌ Dibatalkan oleh pengguna."
+                    exit 0
+                    ;;
+                *)
+                    echo "❌ Input tidak valid! Harap masukkan 'y' atau 'n'."
+                    ;;
+            esac
+        done
+    else
+        echo "❌ Pilihan tidak valid! Masukkan nomor yang sesuai dari daftar."
+    fi
 done
 
-# Pilih disk
-echo "----------------------------------------------"
-read -p "Pilih nomor disk yang akan digunakan: " choice </dev/tty
-
-# Validasi input
-if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#DISKS[@]}" ]; then
-    echo "Pilihan tidak valid!"
-    exit 1
-fi
-
-DISK_PATH="${DISKS[$((choice-1))]}"
-
-echo
-echo "Disk terpilih: $DISK_PATH"
-echo
-
-# Konfirmasi sebelum hapus isi disk
-read -p "Semua data di $DISK_PATH akan dihapus. Lanjutkan? (y/n): " confirm </dev/tty
-if [ "$confirm" != "y" ]; then
-    echo "Dibatalkan."
-    exit 1
-fi
 
 # ============================
 # PEMBUATAN PARTISI (OTOMATIS / MANUAL)
 # ============================
-echo
-echo "Pilih metode pembuatan partisi:"
-echo "1) Otomatis (dibuat oleh script)"
-echo "2) Manual (buka cfdisk untuk konfigurasi sendiri)"
-read -p "Pilih opsi [1/2]: " PART_OPTION </dev/tty
+while true; do
+    echo -e "\nMetode Pembuatan Partisi:"
+    echo "  [1] Otomatis"
+    echo "  [2] Manual (cfdisk)"
+    read -p "Pilih opsi [1/2]: " PART_OPTION </dev/tty
 
-if [ "$PART_OPTION" == "2" ]; then
-    echo
-    echo "Membuka cfdisk untuk konfigurasi manual..."
-    echo "Gunakan tipe 'dos' untuk BIOS / 'gpt' untuk UEFI, lalu buat partisi."
-    echo "Tekan 'Write' untuk menyimpan lalu 'Quit'."
-    echo
-    sleep 2
-    cfdisk "$DISK_PATH" </dev/tty
-    echo
-    echo "Selesai konfigurasi manual."
-    lsblk "$DISK_PATH"
-    echo
-    read -p "Masukkan partisi root yang akan digunakan (contoh: ${DISK_PATH}1): " ROOT_PART </dev/tty
+    if [[ "$PART_OPTION" == "1" ]]; then
+        echo -e "\n▶ Membuat partisi otomatis di $DISK_PATH..."
+        sleep 1
 
-    # Jika mode UEFI, tawarkan mount partisi EFI juga
-    if [ "$MODE" == "UEFI" ]; then
-        read -p "Masukkan partisi EFI (contoh: ${DISK_PATH}2, atau kosongkan jika tidak ada): " EFI_PART </dev/tty
-    fi
-else
-    echo
-    echo "Membuat partisi otomatis di $DISK_PATH..."
-    sleep 2
+        if [[ "$MODE" == "UEFI" ]]; then
+            parted -s "$DISK_PATH" mklabel gpt
+            parted -s "$DISK_PATH" mkpart "EFI" fat32 1MiB 512MiB
+            parted -s "$DISK_PATH" set 1 esp on
+            parted -s "$DISK_PATH" mkpart "ROOT" ext4 512MiB 100%
+            EFI_PART="${DISK_PATH}1"
+            ROOT_PART="${DISK_PATH}2"
+            mkfs.fat -F32 "$EFI_PART"
+        else
+            parted -s "$DISK_PATH" mklabel msdos
+            parted -s "$DISK_PATH" mkpart primary ext4 1MiB 100%
+            ROOT_PART="${DISK_PATH}1"
+        fi
 
-    if [ "$MODE" == "UEFI" ]; then
-        parted -s "$DISK_PATH" mklabel gpt
-        parted -s "$DISK_PATH" mkpart "EFI" fat32 1MiB 512MiB
-        parted -s "$DISK_PATH" set 1 esp on
-        parted -s "$DISK_PATH" mkpart "ROOT" ext4 512MiB 100%
-        EFI_PART="${DISK_PATH}1"
-        ROOT_PART="${DISK_PATH}2"
-        mkfs.fat -F32 "$EFI_PART"
+    elif [[ "$PART_OPTION" == "2" ]]; then
+        echo -e "\n▶ Membuka cfdisk..."
+        echo "  - Gunakan 'dos' untuk BIOS atau 'gpt' untuk UEFI"
+        echo "  - Buat dan simpan partisi, lalu keluar"
+        sleep 2
+        cfdisk "$DISK_PATH" </dev/tty
+
+        echo -e "\n📂 Partisi setelah konfigurasi manual:"
+        lsblk "$DISK_PATH"
+
+        read -p "Masukkan partisi ROOT (contoh: ${DISK_PATH}1): " ROOT_PART </dev/tty
+
+        if [[ "$MODE" == "UEFI" ]]; then
+            read -p "Masukkan partisi EFI (contoh: ${DISK_PATH}2) [enter jika tidak ada]: " EFI_PART </dev/tty
+        fi
+
     else
-        parted -s "$DISK_PATH" mklabel msdos
-        parted -s "$DISK_PATH" mkpart primary ext4 1MiB 100%
-        ROOT_PART="${DISK_PATH}1"
+        echo -e "\n❌ Opsi tidak valid. Harap pilih 1 atau 2."
+        continue
     fi
-fi
 
+    # ============================
+    # KONFIRMASI SEBELUM LANJUT
+    # ============================
+    while true; do
+        echo -e "\n🧩 Partisi yang akan digunakan:"
+        echo "  Root: $ROOT_PART"
+        [[ "$MODE" == "UEFI" && -n "$EFI_PART" ]] && echo "  EFI : $EFI_PART"
+
+        echo -e "\nLanjut ke instalasi?"
+        echo "  [1] Ya, lanjut"
+        echo "  [2] Tidak, ulang partisi"
+        read -p "Pilih opsi [1/2]: " CONFIRM </dev/tty
+
+        if [[ "$CONFIRM" == "1" ]]; then
+            break 2  # Lanjut ke langkah berikutnya
+        elif [[ "$CONFIRM" == "2" ]]; then
+            echo -e "\n🔄 Mengulang proses partisi...\n"
+            sleep 1
+            clear
+            break  # Ulang dari partisi
+        else
+            echo -e "\n❌ Opsi tidak valid. Harap pilih 1 atau 2."
+        fi
+    done
+done
 
 # ============================
 # FORMAT DAN MOUNT PARTISI
@@ -148,12 +189,6 @@ timedatectl set-ntp true
 pacman -Sy
 pacman -S --noconfirm archlinux-keyring
 pacstrap /mnt base linux linux-firmware nano --noconfirm
-
-# ============================
-# BUAT FSTAB
-# ============================
-echo
-echo "Membuat file fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
 # ============================
