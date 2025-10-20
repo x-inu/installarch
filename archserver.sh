@@ -76,11 +76,12 @@ while true; do
             case "$confirm" in
                 y|Y)
                     echo "🔓 Melanjutkan instalasi..."
-                    break 2  # Keluar dari dua loop: konfirmasi & pemilihan disk
+                    break 2  # keluar dari dua loop: konfirmasi & pemilihan disk
                     ;;
                 n|N)
-                    echo "❌ Dibatalkan oleh pengguna."
-                    exit 0
+                    echo "↩️  Kembali ke daftar disk..."
+                    sleep 1
+                    break  # keluar dari loop konfirmasi saja → balik ke loop utama
                     ;;
                 *)
                     echo "❌ Input tidak valid! Harap masukkan 'y' atau 'n'."
@@ -91,6 +92,7 @@ while true; do
         echo "❌ Pilihan tidak valid! Masukkan nomor yang sesuai dari daftar."
     fi
 done
+
 
 
 # ============================
