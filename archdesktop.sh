@@ -71,28 +71,6 @@ grep -q "^%wheel" /etc/sudoers || echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoer
 
 echo -e "\nUser '$NEWUSER' siap digunakan dengan akses sudo."
 
-# ============================
-# TANYA: Apakah ada OS lain?
-# ============================
-#echo
-#read -p "Apakah ada OS lain (bootable lain)? (y/n): " bootable </dev/tty
-#if [ "$bootable" == "y" ]; then
-#    echo "Menjalankan instalasi GRUB..."
-#    pacman -S --noconfirm grub efibootmgr dosfstools mtools os-prober
-#
-#    grub-install --removable --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
-#    grub-mkconfig -o /boot/grub/grub.cfg
-#
-#    echo
-#    echo "Silakan ubah konfigurasi grub..."
-#    echo "Menghapus tanda # pada GRUB_DISABLE_OS_PROBER=false"
-#    sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
-#
-#    grub-mkconfig -o /boot/grub/grub.cfg
-#else
-#    echo "Tidak ada bootable lain, lewati instalasi GRUB."
-#fi
-
 echo -ne "
 ==============================================
 |        INSTALL ARCH DESKTOP KDE             |
