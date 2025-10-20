@@ -25,7 +25,7 @@ while true; do
         2)
             clear
             echo "Menjalankan script setup desktop..."
-            curl -fsSL https://raw.githubusercontent.com/x-inu/installarch/refs/heads/main/archdesktop.sh | bash
+            curl -fsSL https://raw.githubusercontent.com/x-inu/installarch/refs/heads/main/instal.sh | bash
             echo
             echo "=============================================="
             echo "|     SELESAI INSTALL ARCH DESKTOP           |"
