@@ -150,14 +150,14 @@ while true; do
     echo "----------------------------------------------"
     echo "⚠️  Pastikan TIDAK memilih USB installer yang sedang dipakai."
 
-    read -p "🖋️  Pilih nomor disk yang akan digunakan: " choice </dev/tty
+    read -r -p "🖋️  Pilih nomor disk yang akan digunakan: " choice </dev/tty
 
     if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#DISKS[@]} )); then
         DISK_PATH="${DISKS[$((choice-1))]}"
         echo -e "\n✅ Disk terpilih: $DISK_PATH"
 
         while true; do
-            read -p "⚠️  Semua data di $DISK_PATH akan dihapus. Lanjutkan? (y/n): " confirm </dev/tty
+            read -r -p "⚠️  Semua data di $DISK_PATH akan dihapus. Lanjutkan? (y/n): " confirm </dev/tty
             case "$confirm" in
                 y|Y)
                     echo "🔓 Melanjutkan instalasi..."
@@ -192,7 +192,7 @@ while true; do
     echo -e "\nMetode Pembuatan Partisi:"
     echo "  [1] Otomatis"
     echo "  [2] Manual (cfdisk)"
-    read -p "Pilih opsi [1/2]: " PART_OPTION </dev/tty
+    read -r -p "Pilih opsi [1/2]: " PART_OPTION </dev/tty
 
     if [[ "$PART_OPTION" == "1" ]]; then
         echo -e "\n▶ Membuat partisi otomatis di $DISK_PATH..."
@@ -231,10 +231,10 @@ while true; do
         echo -e "\n📂 Partisi setelah konfigurasi manual:"
         lsblk -p "$DISK_PATH"
 
-        read -p "Masukkan partisi ROOT (contoh: $(part_name "$DISK_PATH" 1)): " ROOT_PART </dev/tty
+        read -r -p "Masukkan partisi ROOT (contoh: $(part_name "$DISK_PATH" 1)): " ROOT_PART </dev/tty
 
         if [[ "$MODE" == "UEFI" ]]; then
-            read -p "Masukkan partisi EFI (contoh: $(part_name "$DISK_PATH" 2)): " EFI_PART </dev/tty
+            read -r -p "Masukkan partisi EFI (contoh: $(part_name "$DISK_PATH" 2)): " EFI_PART </dev/tty
         fi
 
     else
@@ -268,7 +268,7 @@ while true; do
         echo -e "\nLanjut ke instalasi?"
         echo "  [1] Ya, lanjut"
         echo "  [2] Tidak, ulang partisi"
-        read -p "Pilih opsi [1/2]: " CONFIRM </dev/tty
+        read -r -p "Pilih opsi [1/2]: " CONFIRM </dev/tty
 
         if [[ "$CONFIRM" == "1" ]]; then
             break 2
@@ -291,8 +291,15 @@ echo -ne "
 |              SETUP HOSTNAME                |
 ==============================================
 "
-read -p "Masukkan hostname (default: archlinux): " HOSTNAME_NEW </dev/tty
+read -r -p "Masukkan hostname (default: archlinux): " HOSTNAME_NEW </dev/tty
 [ -z "$HOSTNAME_NEW" ] && HOSTNAME_NEW="archlinux"
+# Validasi sesuai RFC 1123: huruf/angka/'-', maksimal 63 karakter.
+# Tanpa ini, karakter seperti apostrof akan merusak /root/install.env saat di-source.
+while ! [[ "$HOSTNAME_NEW" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$ ]]; do
+    echo "❌ Hostname tidak valid (huruf, angka, dan '-' saja; maks 63 karakter)."
+    read -r -p "Masukkan hostname (default: archlinux): " HOSTNAME_NEW </dev/tty
+    [ -z "$HOSTNAME_NEW" ] && HOSTNAME_NEW="archlinux"
+done
 echo "Hostname: $HOSTNAME_NEW"
 
 echo -ne "
@@ -301,7 +308,7 @@ echo -ne "
 ==============================================
 "
 while true; do
-    read -p "Masukkan nama user baru: " NEWUSER </dev/tty
+    read -r -p "Masukkan nama user baru: " NEWUSER </dev/tty
     if [[ "$NEWUSER" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
         break
     fi
@@ -310,11 +317,30 @@ done
 
 echo -ne "
 ==============================================
+|             KEYMAP KEYBOARD                |
+==============================================
+"
+CURRENT_KEYMAP="$(localectl status 2>/dev/null | sed -n 's/.*VC Keymap: *//p' | head -n1)"
+case "$CURRENT_KEYMAP" in
+    ""|"n/a"|"(unset)") CURRENT_KEYMAP="us" ;;
+esac
+echo "Contoh: us, uk, de, fr, es, it, br-abnt2, dvorak"
+read -r -p "Masukkan keymap console (default: $CURRENT_KEYMAP): " KEYMAP </dev/tty
+[ -z "$KEYMAP" ] && KEYMAP="$CURRENT_KEYMAP"
+while ! [[ "$KEYMAP" =~ ^[a-zA-Z0-9._-]+$ ]]; do
+    echo "❌ Keymap tidak valid."
+    read -r -p "Masukkan keymap console (default: $CURRENT_KEYMAP): " KEYMAP </dev/tty
+    [ -z "$KEYMAP" ] && KEYMAP="$CURRENT_KEYMAP"
+done
+echo "Keymap: $KEYMAP"
+
+echo -ne "
+==============================================
 |                OPENSSH SERVER              |
 ==============================================
 "
 while true; do
-    read -p "Install & aktifkan OpenSSH server? (y/n): " WANT_SSH </dev/tty
+    read -r -p "Install & aktifkan OpenSSH server? (y/n): " WANT_SSH </dev/tty
     case "$WANT_SSH" in
         y|Y) WANT_SSH="y"; break ;;
         n|N) WANT_SSH="n"; break ;;
@@ -383,6 +409,14 @@ pacstrap -K /mnt "${PKGS[@]}" || die "pacstrap gagal. Cek koneksi/mirror."
 
 genfstab -U /mnt >> /mnt/etc/fstab || die "genfstab gagal."
 
+# Batasi permission ESP agar tidak world-readable (genfstab memakai fmask/dmask=0022)
+if [ "$MODE" == "UEFI" ]; then
+    sed -i '/[[:space:]]\/boot[[:space:]]\+vfat[[:space:]]/{
+        s/fmask=[0-7]*/fmask=0137/
+        s/dmask=[0-7]*/dmask=0027/
+    }' /mnt/etc/fstab
+fi
+
 # ============================
 # SIAPKAN SCRIPT KONFIGURASI DI DALAM CHROOT
 # ============================
@@ -404,6 +438,9 @@ sed -i 's/^#\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
 grep -q '^en_US.UTF-8 UTF-8' /etc/locale.gen || echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
+
+echo "▶ Konfigurasi keymap console: $KEYMAP"
+echo "KEYMAP=$KEYMAP" > /etc/vconsole.conf
 
 echo "▶ Konfigurasi hostname: $HOSTNAME_NEW"
 echo "$HOSTNAME_NEW" > /etc/hostname
@@ -458,7 +495,12 @@ done
 
 echo "▶ Instalasi bootloader ($MODE)"
 if [ "$MODE" = "UEFI" ]; then
-    sed -i 's/^#\?GRUB_DISABLE_OS_PROBER=.*/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
+    # sed hanya mengganti baris yang sudah ada, jadi tambahkan bila belum ada
+    if grep -q '^#\?GRUB_DISABLE_OS_PROBER=' /etc/default/grub; then
+        sed -i 's/^#\?GRUB_DISABLE_OS_PROBER=.*/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
+    else
+        echo 'GRUB_DISABLE_OS_PROBER=false' >> /etc/default/grub
+    fi
     if ! grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB; then
         echo "⚠️  grub-install standar gagal, mencoba mode --removable..."
         grub-install --removable --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB \
@@ -486,14 +528,16 @@ echo "✅ Konfigurasi dalam chroot selesai."
 CHROOT_EOF
 
 cat > /mnt/root/install.env <<ENV_EOF
-TIME_ZONE='$TIME_ZONE'
-HOSTNAME_NEW='$HOSTNAME_NEW'
-NEWUSER='$NEWUSER'
-MODE='$MODE'
-DISK_PATH='$DISK_PATH'
-WANT_SSH='$WANT_SSH'
+TIME_ZONE=$(printf '%q' "$TIME_ZONE")
+HOSTNAME_NEW=$(printf '%q' "$HOSTNAME_NEW")
+NEWUSER=$(printf '%q' "$NEWUSER")
+MODE=$(printf '%q' "$MODE")
+DISK_PATH=$(printf '%q' "$DISK_PATH")
+WANT_SSH=$(printf '%q' "$WANT_SSH")
+KEYMAP=$(printf '%q' "$KEYMAP")
 ENV_EOF
 
+chmod 600 /mnt/root/install.env
 chmod +x /mnt/root/chroot-setup.sh
 
 # ============================

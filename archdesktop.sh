@@ -3,7 +3,8 @@
 # Arch Linux KDE Desktop Setup (Without SDDM)
 # ==============================================
 
-DESKTOP_URL="https://raw.githubusercontent.com/x-inu/installarch/refs/heads/main/archdesktop.sh"
+INSTALLARCH_REF="${INSTALLARCH_REF:-main}"
+DESKTOP_URL="https://raw.githubusercontent.com/x-inu/installarch/${INSTALLARCH_REF}/archdesktop.sh"
 
 echo -ne "
 ==============================================
@@ -22,15 +23,41 @@ die() {
 # ============================
 # MASUK KE CHROOT BILA MASIH DI LIVE ISO
 # ============================
-# Bila /mnt adalah mountpoint sistem terpasang, jalankan ulang script ini
-# DI DALAM chroot lalu kembali ke sini (tidak memakai exec, agar alur utuh).
-if mountpoint -q /mnt 2>/dev/null && [ -d /mnt/etc ]; then
+# Deteksi live ISO lewat penanda archiso, bukan sekadar cek /mnt. Tanpa ini,
+# menjalankan menu desktop sebelum menu server akan memasang KDE ke RAM live
+# ISO dan hilang saat reboot.
+IS_LIVE_ISO="no"
+if [ -d /run/archiso ] || grep -qs 'archisobasedir\|archisolabel' /proc/cmdline; then
+    IS_LIVE_ISO="yes"
+fi
+
+if [ "$IS_LIVE_ISO" == "yes" ]; then
+    if ! mountpoint -q /mnt 2>/dev/null || [ ! -d /mnt/etc ]; then
+        echo "❌ Terdeteksi Arch Live ISO, tetapi tidak ada sistem terpasang di /mnt."
+        echo
+        echo "   Jalankan 'Install ArchServer' terlebih dahulu, atau mount manual:"
+        echo "     mount /dev/<root-partition> /mnt"
+        echo "     mount /dev/<efi-partition> /mnt/boot   # bila UEFI"
+        exit 1
+    fi
+
     echo "📍 Terdeteksi sistem terpasang di /mnt (masih di live ISO)."
     echo "▶ Menjalankan setup desktop di dalam arch-chroot..."
     echo
 
-    if ! arch-chroot /mnt /bin/bash -c "curl -fsSL '$DESKTOP_URL' | bash"; then
-        die "Setup desktop di dalam chroot gagal."
+    # Salin script ini ke dalam chroot daripada mengunduh ulang: menghindari
+    # ketergantungan curl di dalam chroot dan versi yang berbeda akibat cache CDN.
+    SELF="${BASH_SOURCE[0]}"
+    if [ -r "$SELF" ]; then
+        cp "$SELF" /mnt/root/archdesktop-setup.sh || die "Gagal menyalin script ke /mnt."
+        chmod +x /mnt/root/archdesktop-setup.sh
+        arch-chroot /mnt /bin/bash /root/archdesktop-setup.sh
+        RC=$?
+        rm -f /mnt/root/archdesktop-setup.sh
+        [ $RC -eq 0 ] || die "Setup desktop di dalam chroot gagal."
+    else
+        arch-chroot /mnt /bin/bash -c "curl -fsSL '$DESKTOP_URL' -o /root/ad.sh && bash /root/ad.sh; rc=\$?; rm -f /root/ad.sh; exit \$rc" \
+            || die "Setup desktop di dalam chroot gagal."
     fi
 
     echo
@@ -69,7 +96,7 @@ done < <(getent passwd)
 if [ ${#USER_LIST[@]} -eq 0 ]; then
     echo "Tidak ada user biasa ditemukan. Membuat user baru."
     while true; do
-        read -p "Masukkan nama user baru: " TARGET_USER </dev/tty
+        read -r -p "Masukkan nama user baru: " TARGET_USER </dev/tty
         if [[ "$TARGET_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
             break
         fi
@@ -93,7 +120,7 @@ else
     done
     echo
     while true; do
-        read -p "Pilih user untuk dikonfigurasi [1-${#USER_LIST[@]}]: " pilihan </dev/tty
+        read -r -p "Pilih user untuk dikonfigurasi [1-${#USER_LIST[@]}]: " pilihan </dev/tty
         if [[ "$pilihan" =~ ^[0-9]+$ ]] && (( pilihan >= 1 && pilihan <= ${#USER_LIST[@]} )); then
             TARGET_USER="${USER_LIST[$((pilihan-1))]}"
             break
@@ -175,7 +202,7 @@ echo "ℹ️  Jangan campur NVIDIA proprietary dengan driver lain kecuali memang
 
 NVIDIA_INSTALLED="no"
 while true; do
-    read -p "Masukkan pilihan [1-5]: " vga_choice </dev/tty
+    read -r -p "Masukkan pilihan [1-5]: " vga_choice </dev/tty
     case "$vga_choice" in
         1) install_amd_driver; break ;;
         2) install_intel_driver; break ;;
@@ -193,7 +220,7 @@ done
 # Laptop NVIDIA hybrid: tawarkan mesa pendamping
 if [ "$NVIDIA_INSTALLED" == "yes" ]; then
     while true;do
-        read -p "Ini laptop hybrid (Intel/AMD + NVIDIA)? (y/n): " hybrid </dev/tty
+        read -r -p "Ini laptop hybrid (Intel/AMD + NVIDIA)? (y/n): " hybrid </dev/tty
         case "$hybrid" in
             y|Y)
                 pacman -S --noconfirm --needed mesa vulkan-icd-loader
@@ -245,7 +272,7 @@ echo -ne "
 ==============================================
 "
 while true; do
-    read -p "Install YAY (AUR Helper)? (y/n): " install_yay </dev/tty
+    read -r -p "Install YAY (AUR Helper)? (y/n): " install_yay </dev/tty
     case "$install_yay" in
         y|Y)
             pacman -S --noconfirm --needed git base-devel || die "Gagal memasang git/base-devel."
@@ -291,7 +318,7 @@ echo -ne "
 echo
 AUTOLOGIN_USER=""
 while true; do
-    read -p "Aktifkan auto login di tty1 untuk '$TARGET_USER'? (y/n): " autologin </dev/tty
+    read -r -p "Aktifkan auto login di tty1 untuk '$TARGET_USER'? (y/n): " autologin </dev/tty
     case "$autologin" in
         y|Y)
             AUTOLOGIN_USER="$TARGET_USER"
